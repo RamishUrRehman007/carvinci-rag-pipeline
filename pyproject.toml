@@ -8,6 +8,7 @@ dependencies = [
     "fastapi[standard]>=0.142.2",
     "langchain-classic>=1.0.8",
     "langchain-community>=0.4.2",
+    "langchain-google-genai>=4.4.0",
     "langchain-huggingface>=1.2.2",
     "langchain-pymupdf4llm>=1.28.0",
     "langchain-text-splitters>=1.1.2",
