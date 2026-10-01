@@ -3,7 +3,6 @@ import time
 
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -31,14 +30,22 @@ class AnswerGenerator:
     """Generates an answer grounded in the retrieved chunks, using any LangChain chat model."""
 
     def __init__(self, llm: BaseChatModel) -> None:
-        self._chain = PROMPT | llm | StrOutputParser()
+        self._chain = PROMPT | llm
 
     def generate(self, question: str, chunks: list[Document]) -> str:
         started = time.perf_counter()
-        answer = self._chain.invoke({"question": question, "sources": format_sources(chunks)})
+        message = self._chain.invoke({"question": question, "sources": format_sources(chunks)})
         elapsed_ms = (time.perf_counter() - started) * 1000
-        logger.info("Generated answer from %d sources in %.0f ms", len(chunks), elapsed_ms)
-        return answer
+
+        usage = message.usage_metadata or {}
+        logger.info(
+            "Generated answer from %d sources in %.0f ms (%s input tokens, %s output tokens)",
+            len(chunks),
+            elapsed_ms,
+            usage.get("input_tokens", "unknown"),
+            usage.get("output_tokens", "unknown"),
+        )
+        return message.text
 
 
 def format_sources(chunks: list[Document]) -> str:
