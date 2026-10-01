@@ -9,6 +9,7 @@ from langchain_pymupdf4llm import PyMuPDF4LLMLoader
 logger = logging.getLogger(__name__)
 
 BOILERPLATE_PAGE_RATIO = 0.5
+MIN_PAGES_FOR_BOILERPLATE = 3
 TOC_DOTS = re.compile(r"\.{5,}")
 PICTURE_MARKER = re.compile(r"<!-- (Start|End) of picture text -->")
 MARKUP = re.compile(r"[*_#>`]|</?\w+>")
@@ -39,6 +40,9 @@ def load_pdf(path: Path) -> list[Document]:
 
 def find_boilerplate_lines(pages: list[Document]) -> set[str]:
     """Find lines repeated on more than half of the pages, e.g. running headers and footers."""
+    if len(pages) < MIN_PAGES_FOR_BOILERPLATE:
+        return set()
+
     pages_per_line = Counter()
     for page in pages:
         unique_lines = {normalize(line) for line in page.page_content.splitlines()}

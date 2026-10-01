@@ -1,0 +1,104 @@
+[
+  {
+    "type": "fact",
+    "question": "Wie lange gilt die Gewährleistung auf Lackmängel an der Karosserie?",
+    "expected_pages": [
+      6,
+      57
+    ]
+  },
+  {
+    "type": "fact",
+    "question": "Wie viele Jahre sind Durchrostungen an der Karosserie abgedeckt?",
+    "expected_pages": [
+      6
+    ]
+  },
+  {
+    "type": "fact",
+    "question": "Welche Garantie gilt für die Hochvoltbatterie von BEV- und PHEV-Fahrzeugen?",
+    "expected_pages": [
+      6,
+      43
+    ]
+  },
+  {
+    "type": "fact",
+    "question": "Wie lange gilt die Beweislastumkehr nach der Fahrzeugauslieferung?",
+    "expected_pages": [
+      7
+    ]
+  },
+  {
+    "type": "fact",
+    "question": "Ab wann gilt die LongLife Mobilitätsgarantie und wie wird sie erneuert?",
+    "expected_pages": [
+      6,
+      79
+    ]
+  },
+  {
+    "type": "process",
+    "question": "Was ist zu beachten, wenn ein Kunde vom Kaufvertrag zurücktreten möchte?",
+    "expected_pages": [
+      9,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117
+    ]
+  },
+  {
+    "type": "process",
+    "question": "Wie wird eine Reifenpanne bei einem Fahrzeug mit Tire Mobility System abgewickelt?",
+    "expected_pages": [
+      81,
+      97
+    ]
+  },
+  {
+    "type": "process",
+    "question": "Was muss beim Versand von Starter-Batterien beachtet werden?",
+    "expected_pages": [
+      151
+    ]
+  },
+  {
+    "type": "code",
+    "question": "Welche KD-Nummer wird für einen Ersatzwagen Taxi verwendet?",
+    "expected_pages": [
+      81
+    ]
+  },
+  {
+    "type": "code",
+    "question": "Wie wird Pannenhilfe mit der KD-Nr. C901 abgerechnet?",
+    "expected_pages": [
+      81,
+      106
+    ]
+  },
+  {
+    "type": "english",
+    "question": "How long is the warranty for paint defects on the car body?",
+    "expected_pages": [
+      6,
+      57
+    ]
+  },
+  {
+    "type": "english",
+    "question": "What warranty applies to the high-voltage battery of electric vehicles?",
+    "expected_pages": [
+      6,
+      43
+    ]
+  },
+  {
+    "type": "out_of_scope",
+    "question": "Wie hoch sind die monatlichen Leasingraten für einen Tesla Model 3?",
+    "expected_pages": []
+  }
+]

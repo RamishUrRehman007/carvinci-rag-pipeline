@@ -29,11 +29,11 @@ class IngestionService:
         self._chunk_overlap = chunk_overlap
 
     def register(self, filename: str, content: bytes) -> tuple[DocumentRecord, bool]:
-        """Save the upload and return (document, needs_processing). Identical files are reused."""
+        """Save the upload and return (document, needs_processing). Ready duplicates are reused."""
         sha256 = hashlib.sha256(content).hexdigest()
         existing = self._documents.find_by_hash(sha256)
 
-        if existing and existing.status != DocumentStatus.FAILED:
+        if existing and existing.status == DocumentStatus.READY:
             logger.info("Document %s already uploaded, skipping processing", existing.id)
             return existing, False
 
@@ -80,16 +80,6 @@ class IngestionService:
         self._documents.save(ready)
         elapsed_s = time.perf_counter() - started
         logger.info("Document %s ready in %.1f s", document_id, elapsed_s)
-
-    def fail_interrupted(self) -> None:
-        """Mark documents left processing by a server restart as failed, so they can be retried."""
-        for document in self._documents.list_all():
-            if document.status == DocumentStatus.PROCESSING:
-                interrupted = document.model_copy(
-                    update={"status": DocumentStatus.FAILED, "error": "Interrupted by restart"}
-                )
-                self._documents.save(interrupted)
-                logger.warning("Marked interrupted document %s as failed", document.id)
 
     def _file_path(self, document_id: UUID) -> Path:
         return self._uploads_dir / f"{document_id}.pdf"

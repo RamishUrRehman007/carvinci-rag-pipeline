@@ -28,17 +28,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     document_store = DocumentStore(settings.data_dir / "documents.json")
     chunk_store = ChunkStore(settings.data_dir / "chunks.json", embeddings)
 
-    ingestion_service = IngestionService(
+    app.state.document_store = document_store
+    app.state.ingestion_service = IngestionService(
         documents=document_store,
         chunks=chunk_store,
         uploads_dir=settings.data_dir / "uploads",
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
     )
-    ingestion_service.fail_interrupted()
-
-    app.state.document_store = document_store
-    app.state.ingestion_service = ingestion_service
     app.state.rag_service = RAGService(chunk_store, create_generator(settings))
     logger.info("Ready")
     yield
