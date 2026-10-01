@@ -6,10 +6,13 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.142.2",
+    "langchain-classic>=1.0.8",
+    "langchain-community>=0.4.2",
     "langchain-huggingface>=1.2.2",
     "langchain-pymupdf4llm>=1.28.0",
     "langchain-text-splitters>=1.1.2",
     "pydantic-settings>=2.15.0",
+    "rank-bm25>=0.2.2",
     "sentence-transformers>=6.1.0",
 ]
 
