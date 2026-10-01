@@ -58,6 +58,10 @@ flowchart TD
 You need [uv](https://docs.astral.sh/uv/). It installs Python 3.13 for you.
 
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh   # only if you don't have uv yet
+```
+
+```bash
 uv sync
 cp .env.example .env      # optional: add GOOGLE_API_KEY for generated answers
 uv run fastapi dev
@@ -65,8 +69,11 @@ uv run fastapi dev
 
 Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) to try it in the browser.
 
-> The first start downloads the embedding model (about 1.1 GB), so it takes a few minutes.
-> After that it starts in seconds.
+A few things to expect:
+
+- `uv sync` downloads about 1 GB (mostly PyTorch). On Linux it is a few GB, because PyTorch comes with GPU support there.
+- The first start downloads the embedding model (about 1.1 GB), so it takes a few minutes. After that it starts in seconds.
+- The Gemini key is optional. You can get a free one at [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Without it, you still get the search results.
 
 
 
