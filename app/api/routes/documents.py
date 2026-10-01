@@ -10,7 +10,11 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 PDF_SIGNATURE = b"%PDF-"
 
 
-@router.post("", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={status.HTTP_200_OK: {"model": DocumentRecord, "description": "Already uploaded"}},
+)
 def upload_document(
     file: UploadFile,
     response: Response,

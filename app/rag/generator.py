@@ -61,5 +61,10 @@ def create_generator(settings: Settings) -> AnswerGenerator | None:
         logger.warning("GOOGLE_API_KEY is not set, answers will not be generated")
         return None
 
-    llm = ChatGoogleGenerativeAI(model=settings.llm_model, api_key=settings.google_api_key)
+    llm = ChatGoogleGenerativeAI(
+        model=settings.llm_model,
+        api_key=settings.google_api_key,
+        thinking_config={"thinking_level": settings.llm_thinking_level},
+        max_retries=1,
+    )
     return AnswerGenerator(llm)

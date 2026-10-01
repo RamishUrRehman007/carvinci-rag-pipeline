@@ -21,8 +21,9 @@ class RAGService:
         if self._generator and chunks:
             try:
                 answer = self._generator.generate(request.question, chunks)
-            except Exception:
-                logger.exception("Answer generation failed, returning sources only")
+            except Exception as error:
+                reason = getattr(error, "status", None) or type(error).__name__
+                logger.warning("Skipped answer generation (%s), returning sources only", reason)
 
         sources = [
             Source(
