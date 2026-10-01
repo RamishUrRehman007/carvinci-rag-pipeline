@@ -5,6 +5,54 @@ You get the most relevant passages back, plus a short answer with citations if a
 
 Built with FastAPI, Pydantic and LangChain. Everything runs locally.
 
+### Uploading a PDF
+
+```mermaid
+flowchart TD
+    A["POST /documents"] --> V{"PDF and under 50 MB?"}
+    V -- no --> X["415 / 413"]
+    V -- yes --> B{"Same file already ready?"}
+    B -- yes --> C["Return the existing document (200)"]
+    B -- no --> D["Save file, status: processing (202)"]
+    D --> F
+    subgraph P["Background task"]
+        F["Each page to Markdown"] --> G["Remove headers, footers, TOC lines"]
+        G --> H["Split by headings (section carries over page breaks)"]
+        H --> I["Split long sections into ~800 char chunks"]
+        I --> J["Prefix each chunk with its section title"]
+        J --> K["Embed with multilingual-e5"]
+        K --> L[("Chunk store")]
+    end
+    L --> M["status: ready"]
+    P -. "any error, or no text found" .-> E["status: failed"]
+```
+
+
+
+
+
+### Asking a question
+
+```mermaid
+flowchart TD
+    Q["POST /query"] --> D["Chunks of all documents, or one document_id"]
+    D --> S["Semantic search: top 20 by meaning"]
+    D --> K["Keyword search (BM25): top 20 by exact words"]
+    S --> R["Merge with Reciprocal Rank Fusion"]
+    K --> R
+    R --> T["Top k chunks"]
+    T --> G{"Key set and chunks found?"}
+    G -- yes --> A["Gemini answers from the chunks only, with citations"]
+    G -- no --> N["answer: null"]
+    A -. "Gemini error, e.g. daily limit" .-> N
+    A --> O["Return answer + sources"]
+    N --> O
+```
+
+
+
+
+
 ## Quickstart
 
 You need [uv](https://docs.astral.sh/uv/). It installs Python 3.13 for you.
@@ -15,10 +63,12 @@ cp .env.example .env      # optional: add GOOGLE_API_KEY for generated answers
 uv run fastapi dev
 ```
 
-Open http://127.0.0.1:8000/docs to try it in the browser.
+Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) to try it in the browser.
 
 > The first start downloads the embedding model (about 1.1 GB), so it takes a few minutes.
 > After that it starts in seconds.
+
+
 
 ## Demo
 
@@ -34,64 +84,6 @@ An English question about the German document:
 
 ![English question](docs/screenshots/4-query-english.png)
 
-## Usage
-
-Upload a PDF. It is processed in the background, so the response comes back right away:
-
-```bash
-curl -F "file=@Gewährleistungshandbuch.pdf;type=application/pdf" \
-  http://127.0.0.1:8000/api/v1/documents
-```
-
-Check the status until it says `ready` (about 80 seconds for the 155-page handbook):
-
-```bash
-curl http://127.0.0.1:8000/api/v1/documents/<id>
-```
-
-Ask a question, in German or English:
-
-```bash
-curl -H "Content-Type: application/json" \
-  -d '{"question": "Wie lange gilt die Garantie auf Lackmängel?"}' \
-  http://127.0.0.1:8000/api/v1/query
-```
-
-The response looks like this (shortened):
-
-```json
-{
-  "answer": "Lackmängel an der Karosserie sind 3 Jahre ohne Kilometerbegrenzung abgedeckt [1].",
-  "sources": [
-    {"document_id": "…", "page": 6, "section": "1.1 Volkswagen Garantie- und Gewährleistungspaket > …", "content": "…"}
-  ]
-}
-```
-
-`[1]` in the answer points to the first source. Without an API key, `answer` is `null` and you still get the sources.
-
-| Endpoint | What it does |
-|---|---|
-| `POST /api/v1/documents` | Upload a PDF (`202`, or `200` if the same file is already indexed) |
-| `GET /api/v1/documents` | List documents and their status |
-| `GET /api/v1/documents/{id}` | Status of one document: `processing`, `ready` or `failed` |
-| `POST /api/v1/query` | Ask a question. Optional: `top_k` (default 5) and `document_id` |
-
-## How it works
-
-```
-PDF ─► Markdown per page ─► remove headers/footers ─► split by headings ─► embed ─► store
-                                                                                     │
-question ─► semantic search + keyword search ─► merge results ─► Gemini answer ◄─────┘
-```
-
-A few choices worth explaining:
-
-- **Chunks follow the document's headings.** The handbook is well structured, so I split by section first and only then by size. Every result knows its section and page.
-- **Local embeddings** (`multilingual-e5-base`). Good with German, free, and the documents never leave your machine.
-- **Hybrid search.** Semantic search understands meaning ("Lackschäden" finds "Lackmängel"). Keyword search (BM25) finds exact codes like `C901`. Both lists are merged with Reciprocal Rank Fusion.
-- **Grounded answers.** The prompt only allows facts from the sources, asks for citations, and says "not in the documents" instead of guessing.
-- **I didn't use semantic chunking.** The handbook already marks its own sections, and embedding every sentence first would make indexing much slower.
 
 ## Evaluation
 
@@ -101,11 +93,13 @@ A few choices worth explaining:
 uv run python -m eval.run_eval      # expects Gewährleistungshandbuch.pdf in the project root
 ```
 
-| Metric | Result |
-|---|---|
-| Correct page in the top 5 | 12 of 12 |
-| MRR | 0.78 |
-| Search latency | ~50 ms median |
+
+| Metric                    | Result        |
+| ------------------------- | ------------- |
+| Correct page in the top 5 | 12 of 12      |
+| MRR                       | 0.78          |
+| Search latency            | ~50 ms median |
+
 
 With an API key, the script also prints each answer and its token usage.
 
@@ -131,6 +125,8 @@ eval/          retrieval evaluation
 tests/
 ```
 
+
+
 ## Limitations
 
 This was built for a 60-minute task, so I kept it simple on purpose:
@@ -140,9 +136,17 @@ This was built for a 60-minute task, so I kept it simple on purpose:
 - No OCR, so text inside images is not searchable.
 - If Gemini fails or hits its daily limit, the API skips the answer, logs it, and still returns the sources.
 
+
+
 ## Making it production-ready
 
 1. **Event-driven ingestion.** An upload publishes an event, and workers parse, chunk and embed the document. This scales on its own and survives restarts.
 2. **A real vector store.** OpenSearch at scale, or PostgreSQL with pgvector while the volume is small. Both also give proper full-text search.
 3. **Guardrails.** Check questions and answers, refuse anything outside the documents' scope with a denial gate, and scrub personal data (PII) before it reaches the LLM or the logs.
 4. **Docker.** Package the API and workers as containers, so they are easy to run and deploy.
+
+
+
+## A note on transparency
+
+I wrote this with [Claude Code](https://claude.com/claude-code), the coding assistant I use every day at work. The design and decisions are mine; Claude Code helped me turn them into code. I reviewed and committed every step myself
