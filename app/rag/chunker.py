@@ -11,6 +11,7 @@ MARKUP = re.compile(r"[*_]|</?\w+>")
 
 
 def split_into_chunks(pages: list[Document], chunk_size: int, chunk_overlap: int) -> list[Document]:
+    """Split pages into size-limited chunks, each prefixed with its section title."""
     sections = split_into_sections(pages)
 
     size_splitter = RecursiveCharacterTextSplitter(

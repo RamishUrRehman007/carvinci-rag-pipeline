@@ -17,6 +17,7 @@ EXTRA_BLANK_LINES = re.compile(r"\n{3,}")
 
 
 def load_pdf(path: Path) -> list[Document]:
+    """Load a PDF as one markdown Document per page, without headers, footers and TOC lines."""
     pages = PyMuPDF4LLMLoader(path, mode="page").load()
     boilerplate = find_boilerplate_lines(pages)
 
@@ -37,6 +38,7 @@ def load_pdf(path: Path) -> list[Document]:
 
 
 def find_boilerplate_lines(pages: list[Document]) -> set[str]:
+    """Find lines repeated on more than half of the pages, e.g. running headers and footers."""
     pages_per_line = Counter()
     for page in pages:
         unique_lines = {normalize(line) for line in page.page_content.splitlines()}
